@@ -84,6 +84,7 @@ class KorpusomatApiRequest():
                 "text_id": int(text_data[5].find("a")["data-text-id"])
             }
             all_texts_list.append(text_dict)
+            procceding = False
         return all_texts_list
 
     def add_corpus(self, corpus_name):
@@ -136,23 +137,37 @@ class KorpusomatApiRequest():
                 "User-Agent": self.headers["User-Agent"],
                 "Content-Type": m.content_type
             })
-        print(f"Text-file {file_name} has been added to corpus {corpus_id}")
-        # Check for all files with name file_name and if there is more than 1 choose one with greatest id number.
+        print(
+            f"Text-file {file_src_name} has been added to corpus {corpus_id}")
+        # Wait to load all files in corpus and check for all files with name file_name and if there is more than 1 choose one with greatest id number.
         same_named_texts = []
-        for text in self.all_texts(corpus_id):
-            if text["file_name"] == file_name:
-                same_named_texts.append(text)
-        if len(same_named_texts) > 1:
-            texts_ids = []
-            # ######
-            for corpus in same_named_texts:
-                corpora_ids.append(corpus["corpus_id"])
-            return same_named_corpora[corpora_ids.index(max(corpora_ids))]
-        else:
-            return same_named_corpora[0]
+        procceding = True
+        while procceding == True:
+            try:
+                for text in self.all_texts(corpus_id):
+                    if text["file_name"] == file_src_name:
+                        same_named_texts.append(text)
+                if len(same_named_texts) > 1:
+                    print(">1")
+                    texts_ids = []
+                    for sn_text in same_named_texts:
+                        texts_ids.append(sn_text["text_id"])
+                    return same_named_texts[texts_ids.index(max(texts_ids))]
+                else:
+                    print("!>1")
+                    return same_named_texts[0]
+            except AttributeError:
+                print("File procceding in progress... Sleeping for 1 second")
+                time.sleep(1)
+                continue
+            except TypeError:
+                print("File procceding in progress... Sleeping for 1 second")
+                time.sleep(1)
+                continue
 
 
 korp = KorpusomatApiRequest()
 korp.login()
-korp.all_texts(corpus_id=715)
+result = korp.add_text(corpus_id=717, file_path="Zupełnie-inny.txt")
+print(result)
 korp.logout()
